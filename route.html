@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shortest Route & YouTube Tool</title>
+    
+    <!-- Leaflet Map Stylesheets -->
+    <link rel="stylesheet" href="https://unpkg.com" />
+    <link rel="stylesheet" href="https://unpkg.com" />
+
+    <style>
+        body { margin: 0; padding: 0; display: flex; font-family: Arial, sans-serif; }
+        #map { width: 65%; height: 100vh; }
+        #sidebar { width: 35%; height: 100vh; background: #f9f9f9; box-sizing: border-box; padding: 15px; display: flex; flex-direction: column; gap: 15px; border-left: 2px solid #ccc; overflow-y: auto; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #status { color: #007bff; font-weight: bold; margin-bottom: 5px; }
+        .btn { background: #28a745; color: white; border: none; padding: 10px; font-size: 14px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn:hover { background: #218838; }
+        .input-box { width: 93%; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <!-- Map Canvas Element -->
+    <div id="map"></div>
+
+    <!-- Control Side Menu -->
+    <div id="sidebar">
+        <h2>Shortest Route Tool</h2>
+        <div id="status">Locating you via GPS...</div>
+        
+        <button class="btn" onclick="updateMyLocation()">🔄 Refresh My Location</button>
+        <p style="font-size: 13px; color: #555;">Click anywhere on the map to find the shortest route from your location.</p>
+        
+        <hr>
+        
+        <h3>YouTube Video Panel</h3>
+        <input type="text" id="ytUrl" class="input-box" placeholder="Paste YouTube link here..." oninput="changeVideo()">
+        <p style="font-size: 11px; color: #777; margin: 2px 0 10px 0;">Example: https://youtube.com</p>
+
+        <div class="video-container">
+            <iframe id="videoPlayer" src="https://youtube.com" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <!-- Leaflet & Routing JavaScript Plugins -->
+    <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com"></script>
+
+    <!-- Main Map Application Logic -->
+    <script>
+        var map = L.map('map').setView([22.5726, 88.3639], 13);
+        var startLatLng = null;
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var control = L.Routing.control({
+            waypoints: [],
+            routeWhileDragging: true
+        }).addTo(map);
+
+        // Locates user and updates starting position safely
+        function updateMyLocation() {
+            document.getElementById('status').style.color = "#007bff";
+            document.getElementById('status').innerText = "🔄 Finding your location... (Please click 'Allow' on your browser pop-up)";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+                    startLatLng = L.latLng(lat, lng);
+
+                    document.getElementById('status').style.color = "green";
+                    document.getElementById('status').innerText = "📍 Location Fixed!";
+                    map.setView(startLatLng, 14);
+
+                    // FIXED: Corrected waypoints index tracking syntax
+                    var wps = control.getWaypoints();
+                    if (wps && wps.length > 1 && wps[1] && wps[1].latLng) {
+                        control.setWaypoints([startLatLng, wps[1].latLng]);
+                    } else {
+                        control.setWaypoints([startLatLng]);
+                    }
+
+                }, function(error) {
+                    document.getElementById('status').style.color = "red";
+                    document.getElementById('status').innerText = "❌ GPS denied or unavailable.";
+                });
+            } else {
+                document.getElementById('status').innerText = "Browser doesn't support GPS.";
+            }
+        }
+
+        // Initialize GPS tracking on startup
+        updateMyLocation();
+
+        // Handle routing destinations when the user clicks the map layout
+        map.on('click', function(e) {
+            if (!startLatLng) {
+                startLatLng = map.getCenter();
+            }
+            control.setWaypoints([startLatLng, e.latLng]);
+        });
+
+        // FIXED: Re-engineered YouTube text parser prevents split crashes
+        function changeVideo() {
+            var url = document.getElementById('ytUrl').value.trim();
+            var videoId = "";
+
+            try {
+                if (url.includes("v=")) {
+                    videoId = url.split("v=")[1].split("&")[0];
+                } else if (url.includes("youtu.be/")) {
+                    videoId = url.split("youtu.be/")[1].split("?")[0];
+                } else if (url.includes("embed/")) {
+                    videoId = url.split("embed/")[1].split("?")[0];
+                }
+            } catch (err) {
+                console.log("Invalid URL format typed.");
+            }
+
+            if (videoId) {
+                document.getElementById('videoPlayer').src = "https://youtube.com" + videoId;
+            }
+        }
+    </script>
+</body>
+</html>
