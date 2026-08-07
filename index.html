@@ -635,6 +635,36 @@
         map.on("layerremove", function(){
             resetLabels([layer_SECTOR_OFFICE_4,layer_81_POLLING_STATION_5]);
         });
+// 1. Create a user interface box for the Buffer Tool
+var bufferContainer = document.createElement('div');
+bufferContainer.innerHTML = `
+    <div style="position: absolute; bottom: 20px; left: 20px; z-index: 1000; 
+                background: white; padding: 10px; border-radius: 5px; 
+                box-shadow: 0 0 15px rgba(0,0,0,0.2); font-family: Arial, sans-serif;">
+        <b style="color: black; display: block; margin-bottom: 5px;">Buffer Tool</b>
+        <input type="number" id="bufferInput" value="1" style="width: 60px; padding: 3px;"> KM 
+    </div>
+`;
+document.body.appendChild(bufferContainer);
+
+// 2. Variable to store the active buffer layer
+var currentBuffer = null;
+
+// 3. Create a buffer circle when the user clicks on the map
+map.on('click', function(e) {
+    if (currentBuffer) {
+        map.removeLayer(currentBuffer);
+    }
+    var kmDistance = document.getElementById('bufferInput').value;
+    var meterDistance = kmDistance * 1000; 
+    currentBuffer = L.circle(e.latlng, {
+        radius: meterDistance,
+        color: '#28a745',       
+        fillColor: '#28a745',   
+        fillOpacity: 0.2,       
+        weight: 2               
+    }).addTo(map);
+});
         </script>        
     </body>
 </html>
