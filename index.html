@@ -637,17 +637,47 @@
         });
 // ... your original QGIS map codes ...
         // ... your original QGIS map codes ...
+        // 1. Create a variable to hold the point buffer layer
+        var pointBufferLayer = null;
+
+        // 2. Create the Buffer Tool interface box on the map (Using Meters)
+        var pointBufferBox = document.createElement('div');
+        pointBufferBox.innerHTML = `
+            <div style="position: absolute; bottom: 20px; left: 20px; z-index: 1000; 
+                        background: white; padding: 10px; border-radius: 5px; 
+                        box-shadow: 0 0 15px rgba(0,0,0,0.2); font-family: Arial, sans-serif;">
+                <b style="color: black; display: block; margin-bottom: 5px;">Point Buffer Tool</b>
+                <input type="number" id="pointRadiusInput" value="500" style="width: 70px; padding: 3px;"> Meters
+                <small style="display: block; color: gray; margin-top: 5px;">Click on any Point Feature</small>
+            </div>
+        `;
+        document.body.appendChild(pointBufferBox);
+
+        // 3. Automatically apply buffer when clicking on any point feature on the map
+        map.on('popupopen', function(e) {
+            // Remove old buffer circle if it exists
+            if (pointBufferLayer) {
+                map.removeLayer(pointBufferLayer);
+            }
+            
+            // Get the exact location (Latitude & Longitude) of the clicked point feature
+            var pointLatLng = e.popup.getLatLng();
+            
+            if (pointLatLng) {
+                // Get the distance value directly in METERS from the input box
+                var meterValue = document.getElementById('pointRadiusInput').value;
+                
+                // Draw a circle buffer centered exactly on that point location
+                pointBufferLayer = L.circle(pointLatLng, {
+                    radius: Number(meterValue), // Use the exact meter input value
+                    color: '#007bff',       // Border color (Blue)
+                    fillColor: '#007bff',   // Fill color inside the buffer
+                    fillOpacity: 0.25,      // Transparency level
+                    weight: 2               // Line thickness
+                }).addTo(map);
+            }
+        });
+
 </script>
 </body>
-</html>
-// ... your original QGIS map codes ...
-        // ... your original QGIS map codes ...
-</script>
-</body>
-</html>
-        </script>        
-    </body>
-</html>
-        </script>        
-    </body>
 </html>
